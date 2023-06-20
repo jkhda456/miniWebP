@@ -11,6 +11,7 @@ type
   TWebPDecodeBGRA = function(const data: PByte; data_size: Cardinal; width, height: PInteger): PByte; cdecl;
   TWebPFree = procedure (p : pointer); cdecl;
 
+function isLibLoaded(): Boolean;
 function loadLibWebP(ALibPath: String): Integer;
 function unloadLibWebP: Integer;
 
@@ -29,6 +30,11 @@ var
   libwebp_hwnd: Hwnd = 0;
   WebPDecodeBGRA: TWebPDecodeBGRA = nil;
   WebPFree: TWebPFree = nil;
+
+function isLibLoaded(): Boolean;
+begin
+  Result := libwebp_hwnd <> 0;
+end;
 
 function loadLibWebP(ALibPath: String): Integer;
 begin
@@ -72,14 +78,23 @@ var
 begin
   bmp := TGPBitmap.Create;
   fs := TFileStream.Create(TargetFile, fmOpenRead);
+
   Try
      WebpDecode(fs, dat, bmp);
+  Finally
+     fs.Free;
+  End;
+
+  Try
      bmp.Save(DestFile, gPNG);
   Finally
      bmp.Free;
-     fs.Free;
      WebPFree(dat);  //
   End;
 end;
 
+initialization
+
+finalization
+  unloadLibWebP;
 end.
